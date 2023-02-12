@@ -1,5 +1,6 @@
 from sqlalchemy import Column, sql
-from .database import db
+
+from db.database import db
 
 
 class Answer(db.Model):

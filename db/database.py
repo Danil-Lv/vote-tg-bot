@@ -1,8 +1,9 @@
+from os import getenv
+
 from gino import Gino
 from gino.schema import GinoSchemaVisitor
-
 from dotenv import load_dotenv
-from os import getenv
+
 
 load_dotenv()
 db = Gino()

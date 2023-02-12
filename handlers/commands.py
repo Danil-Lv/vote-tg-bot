@@ -1,8 +1,7 @@
 from aiogram import types, Dispatcher
 
-from db.db_commands import get_last_message_id
 from .handling_post import PostStateGroup
-from keyboards import kb_start, kb_create_post
+from keyboards import kb_start
 
 
 # @dp.message_handler(commands=['start'])

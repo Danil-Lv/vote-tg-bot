@@ -1,6 +1,6 @@
 from sqlalchemy import and_
 
-from .model import Answer, LastId, Question, UserQuestion
+from db.model import *
 
 """Last id"""
 
@@ -23,6 +23,7 @@ async def update_last_message_id(id_new=None):  # Нужени ли id_new?
         await last_message_id.update(last_id=last_message_id.last_id + 1).apply()
 
 
+
 #     прописать в хендлере если None то требуем пост создаем айди
 
 
@@ -41,7 +42,12 @@ async def get_question(message_id):
 
 
 async def delete_question(message_id):
+    question = await get_question(message_id)
+    for i in range(4):
+        await Answer.delete.where(Answer.question_id == question.id).gino.status()
+    await UserQuestion.delete.where(UserQuestion.question_id == question.id).gino.status()
     await Question.delete.where(Question.message_id == message_id).gino.status()
+
 
 
 """Answer"""
@@ -67,10 +73,6 @@ async def post_counter_increase(answer_id, question_id):
     await question.update(count=question.count + 1).apply()
 
 
-
-async def delete_answers(message_id):
-    for i in range(4):
-        await Answer.delete.where(Answer.message_id == message_id).gino.status()
 
 
 """User_Question"""

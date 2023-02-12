@@ -1,14 +1,15 @@
+from os import getenv
+
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 
-from create_bot import bot
-from handlers.create_post import PostStateGroup
-from keyboards import kb_create_post, ikb_public
 
-from db.db_commands import create_answer, get_answer, delete_answers, get_last_message_id, \
-    create_last_message_id, update_last_message_id, create_question, get_question, post_counter_increase, \
-    get_user_question, create_user_question, get_results
+from create_bot import bot
+from keyboards import kb_create_post, ikb_public
+from handlers.create_post import PostStateGroup
+from db.db_commands import *
+
 
 
 # @dp.channel_post_handler(content_types=[types.ContentType.ANY])
@@ -77,18 +78,18 @@ async def public(callback: CallbackQuery, state: FSMContext):
     """Вопрос о публикации поста"""
     if callback.data.split('_')[-1] == 'not':
         last_message_id = await get_last_message_id()
-        await delete_answers(message_id=last_message_id.last_id + 1)
+        await delete_question(last_message_id.last_id + 1)
         await callback.message.delete()
         await callback.message.answer('Пост удален. Создать новый - /create')
 
     else:
         if data['question'] == '-':
             await bot.send_photo(photo=data['photo'],
-                                 chat_id=-1001612936953,
+                                 chat_id=getenv('CHANEL_ID'),
                                  reply_markup=data['ikb'])
         else:
             await bot.send_photo(photo=data['photo'],
-                                 chat_id=-1001612936953,
+                                 chat_id=getenv('CHANEL_ID'),
                                  caption=f"{data['question']}",
                                  reply_markup=data['ikb'],
                                  parse_mode='HTML')
@@ -101,9 +102,13 @@ async def public(callback: CallbackQuery, state: FSMContext):
 # @dp.callback_query_handler(lambda x: x.data.startswith('vote'))
 async def vote(callback: CallbackQuery):
     """Нажатие на инлайн кнопку поста"""
-    question = await get_question(callback.message.message_id)
+    if callback.message.from_id == int(getenv('TOKEN').split(':')[0]):
+        l_id = await get_last_message_id()
+        question = await get_question(l_id.last_id+1)
+    else:
+        question = await get_question(callback.message.message_id)
     if question.promo:
-        user = await bot.get_chat_member(chat_id=-1001612936953, user_id=callback.from_user.id)
+        user = await bot.get_chat_member(chat_id=getenv('CHANEL_ID'), user_id=callback.from_user.id)
         if user.status == 'left':
             await callback.answer('Подпишитесь на канал, чтобы узнать ответ', show_alert=True)
 
@@ -119,6 +124,11 @@ async def vote(callback: CallbackQuery):
         f"{answer.description}\n\nОтветили так же: {answer.count} чел. ({round(answer.count / question.count * 100)}%)",
         show_alert=True)
 
+async def vote_check(callback: CallbackQuery):
+    question = await get_question(callback.message.message_id)
+    answer = await get_answer(question.id, int(callback.data[-1]))
+
+    await callback.answer(show_alert=True)
 
 async def show_results(callback: CallbackQuery):
     question = await get_question(callback.message.message_id)
@@ -134,7 +144,7 @@ async def show_results(callback: CallbackQuery):
 
 
 async def last_post(message: types.Message):
-    """Обновление/создание last_message_id"""
+    """Cоздание/обновление last_message_id"""
     last_post_id = await get_last_message_id()
     if not last_post_id:
         await create_last_message_id(last_id=message.forward_from_message_id)
@@ -146,6 +156,8 @@ async def last_post(message: types.Message):
     await PostStateGroup.next()
 
 
+
+
 def create_handlers_register(dp: Dispatcher):
     dp.register_message_handler(last_post, is_forwarded=True, state=PostStateGroup.last_post,
                                 content_types=[types.ContentType.ANY])
@@ -155,24 +167,3 @@ def create_handlers_register(dp: Dispatcher):
     dp.register_channel_post_handler(get_any_post, content_types=[types.ContentType.ANY])
     dp.register_message_handler(keyboard_type, state=PostStateGroup.keyboard_type)
     dp.register_callback_query_handler(show_results, text='show_results')
-
-# question = get_question(message_id)
-# answer = get_answer(question_id=question.id)
-# if question.promo and user.status == 'left'
-#
-# user = get_user_message(user_id=callback.from_user.id, question_id=question.id)
-# if user:
-#     get_answer()
-# else:
-#     add_user_message()
-#
-# # callback show_results
-# user = get_user_message(user_id=callback.from_user.id, question_id=question.id)
-# if not user:
-#     callback.message.answer('Сначала нужно проголосовать')
-# else:
-#     question = get_question(message_id)
-#     answer = get_answer(question_id=question.id)
-#     get_results(question_id=question.id)
-#     def get_results(question_id):
-#         question = get_question(message_id)

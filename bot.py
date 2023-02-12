@@ -1,15 +1,10 @@
-from aiogram import executor, types
-from aiogram.dispatcher.filters import ForwardedMessageFilter, filters
+from aiogram import executor
 
-from create_bot import dp, bot
-from db.db_commands import update_last_message_id
+from create_bot import dp
 from handlers.commands import commands_handlers_register
-from magic_filter import F
 from db.database import create_db
-
 from handlers.handling_post import create_handlers_register
 from handlers.create_post import reg_handlers_register
-
 # id юзеров, которым разрешен доступ
 users = (717218923, 812456591)
 
