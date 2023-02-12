@@ -1,19 +1,45 @@
-from aiogram import executor
-from create_bot import dp
-from handlers.commands import commands_handlers_register
+from aiogram import executor, types
+from aiogram.dispatcher.filters import ForwardedMessageFilter, filters
 
+from create_bot import dp, bot
+from db.db_commands import update_last_message_id
+from handlers.commands import commands_handlers_register
+from magic_filter import F
 from db.database import create_db
 
-from handlers.create_post import create_handlers_register
+from handlers.handling_post import create_handlers_register
+from handlers.create_post import reg_handlers_register
+
+# id юзеров, которым разрешен доступ
+users = (717218923, 812456591)
+
+
+# @dp.message_handler(is_forwarded=True, content_types=['photo'])
+# async def some(message: types.Message):
+#     message_chanel_id = message.forward_from_message_id
+#     await message.answer('hello')
+
+# -1001612936953
+
+# @dp.message_handler(chat_type=[types.ChatType.GROUP])
+# async def get_message(message: types.Message):
+#     if message.chat.id == "id первой группы":
+#         await bot.send_message(
+#             "id второй группы",
+#             text= f"User {message.from_user.username}:\n" + message.text
+#         )
+
 
 commands_handlers_register(dp)
 create_handlers_register(dp)
+reg_handlers_register(dp)
 
 
 async def on_startup(_):
-    print('Yes')
+    print('Бот запущен')
     await create_db()
 
 
+
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
+    executor.start_polling(dp, on_startup=on_startup)

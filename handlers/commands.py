@@ -1,6 +1,7 @@
 from aiogram import types, Dispatcher
 
-from .create_post import PostStateGroup
+from db.db_commands import get_last_message_id
+from .handling_post import PostStateGroup
 from keyboards import kb_start, kb_create_post
 
 
@@ -11,8 +12,9 @@ async def start(message: types.Message):
 
 # @dp.message_handler(commands=['create'])
 async def create(message: types.Message):
-    await message.answer(text='Напиши вопрос', reply_markup=kb_create_post)
-    await PostStateGroup.question.set()
+    await message.answer(text='Перешли сюда последнее сообщение из канала')
+    await PostStateGroup.last_post.set()
+
 
 
 def commands_handlers_register(dp: Dispatcher):

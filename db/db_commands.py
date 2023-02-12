@@ -1,35 +1,97 @@
 from sqlalchemy import and_
 
-from .model import Answer, Question
+from .model import Answer, LastId, Question, UserQuestion
+
+"""Last id"""
 
 
-async def add_question(**kwargs):
-    newquestion = await Question(**kwargs).create()
-    return newquestion
+async def create_last_message_id(**kwargs):
+    new_id = await LastId(**kwargs).create()
+    return new_id
 
 
-async def get_question(caption):
-    question = await Question.query.where(Question.title == caption).gino.first()
+async def get_last_message_id():
+    last_message_id = await LastId.query.gino.first()
+    return last_message_id
+
+
+async def update_last_message_id(id_new=None):  # Нужени ли id_new?
+    last_message_id = await LastId.query.gino.first()
+    if id_new:
+        await last_message_id.update(last_id=id_new).apply()
+    else:
+        await last_message_id.update(last_id=last_message_id.last_id + 1).apply()
+
+
+#     прописать в хендлере если None то требуем пост создаем айди
+
+
+"""Вопрос"""
+
+
+async def create_question(**kwargs):
+    new_question = await Question(**kwargs).create()
+    return new_question
+
+
+async def get_question(message_id):
+    question = await Question.query.where(Question.message_id == message_id).gino.first()
+
     return question
 
 
-async def add_answer(**kwargs):
+async def delete_question(message_id):
+    await Question.delete.where(Question.message_id == message_id).gino.status()
+
+
+"""Answer"""
+
+
+async def create_answer(**kwargs):
     newanswer = await Answer(**kwargs).create()
     return newanswer
 
 
-async def get_answer(caption, title):
-    question = await get_question(caption)
+async def get_answer(question_id, position):
     answer = await Answer.query.where(
-        and_(Answer.caption_id == question.id,
-             Answer.title == title)
+        and_(Answer.question_id == question_id,
+             Answer.position == position)
     ).gino.first()
 
     return answer
 
+async def post_counter_increase(answer_id, question_id):
+    question = await Question.query.where(Question.id == question_id).gino.first()
+    answer = await Answer.query.where(Answer.id == answer_id).gino.first()
+    await answer.update(count=answer.count + 1).apply()
+    await question.update(count=question.count + 1).apply()
 
-async def delete_post(question):
-    question = await get_question(question)
-    await Question.delete.where(Question.id == question.id).gino.status()
+
+
+async def delete_answers(message_id):
     for i in range(4):
-        await Answer.delete.where(Answer.caption_id == question.id).gino.status()
+        await Answer.delete.where(Answer.message_id == message_id).gino.status()
+
+
+"""User_Question"""
+
+
+async def create_user_question(**kwargs):
+    new_user_question = await UserQuestion(**kwargs).create()
+    return new_user_question
+
+
+async def get_user_question(user_id, question_id):
+    user_question = await UserQuestion.query.where(
+        and_(UserQuestion.user_id == user_id,
+             UserQuestion.question_id == question_id)
+    ).gino.first()
+
+    return user_question
+
+"""Получение результата ответов"""
+
+async def get_results(question_id):
+    answers = await Answer.query.where(Answer.question_id == question_id).gino.all()
+
+    return answers
