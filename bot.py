@@ -1,4 +1,8 @@
-from aiogram import executor, types, Dispatcher
+
+import logging
+
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils.executor import start_webhook
 
 from create_bot import dp, bot
 from handlers.commands import commands_handlers_register
@@ -9,30 +13,45 @@ from handlers.create_post import reg_handlers_register
 # id юзеров, которым разрешен доступ
 users = (717218923, 812456591)
 
+
+WEBHOOK_HOST = 'https://3e23-212-113-123-72.eu.ngrok.io'
+WEBHOOK_PATH = ''
+WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+
+# webserver settings
+WEBAPP_HOST = 'localhost'  # or ip
+WEBAPP_PORT = 5000
+
 commands_handlers_register(dp)
 create_handlers_register(dp)
 reg_handlers_register(dp)
+dp.middleware.setup(LoggingMiddleware())
 
 
 async def on_startup(_):
     print('Бот запущен')
     await create_db()
+    await bot.set_webhook(WEBHOOK_URL)
 
+
+async def on_shutdown(dp):
+    logging.warning('Работа бота завершена')
+
+    await bot.delete_webhook()
+    await dp.storage.close()
+    await dp.storage.wait_closed()
+
+    logging.warning('Bye!')
 
 if __name__ == '__main__':
-    executor.start_polling(dp, on_startup=on_startup)
+    start_webhook(
+        dispatcher=dp,
+        webhook_path=WEBHOOK_PATH,
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        skip_updates=True,
+        host=WEBAPP_HOST,
+        port=WEBAPP_PORT,
+    )
 
-# @dp.message_handler(is_forwarded=True, content_types=['photo'])
-# async def some(message: types.Message):
-#     message_chanel_id = message.forward_from_message_id
-#     await message.answer('hello')
 
-# -1001612936953
-
-# @dp.message_handler(chat_type=[types.ChatType.GROUP])
-# async def get_message(message: types.Message):
-#     if message.chat.id == "id первой группы":
-#         await bot.send_message(
-#             "id второй группы",
-#             text= f"User {message.from_user.username}:\n" + message.text
-#         )

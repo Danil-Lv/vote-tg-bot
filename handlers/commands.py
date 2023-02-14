@@ -1,4 +1,5 @@
 from aiogram import types, Dispatcher
+from aiogram.dispatcher.webhook import SendMessage
 
 from .create_post import check_id
 from .handling_post import PostStateGroup
@@ -7,8 +8,9 @@ from keyboards import kb_create_post
 
 # @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
+    print('hello')
     await check_id.set()
-    await message.answer(text='Бот для создания опросов. Пришли мне последнее созданное сообщение из канала')
+    return SendMessage(message.chat.id, 'Бот для создания опросов. Пришли мне последнее созданное сообщение из канала')
 
 
 # @dp.message_handler(commands=['create'])
